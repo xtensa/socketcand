@@ -16,6 +16,7 @@
 #define STATE_SHUTDOWN 3
 #define STATE_CONTROL 4
 #define STATE_ISOTP 5
+#define STATE_CAN232 6
 
 #define PRINT_INFO(...) if(daemon_flag) syslog(LOG_INFO, __VA_ARGS__); else printf(__VA_ARGS__);
 #define PRINT_ERROR(...) if(daemon_flag) syslog(LOG_ERR, __VA_ARGS__); else fprintf(stderr, __VA_ARGS__);
@@ -29,6 +30,7 @@
 
 void state_bcm();
 void state_raw();
+void state_can232();
 void state_isotp();
 void state_control();
 
@@ -48,6 +50,7 @@ extern struct sockaddr_in broadcast_addr;
 extern struct sockaddr_in saddr;
 
 int receive_command(int socket, char *buf);
+int receive_command_can232(int socket, char *buf);
 int state_changed(char *buf, int current_state);
 int element_length(char *buf, int element);
 int asc2nibble(char c);

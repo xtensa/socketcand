@@ -107,6 +107,8 @@ int state_changed(char *buf, int current_state)
 		state = STATE_ISOTP;
 	else if(!strcmp("< controlmode >", buf))
 		state = STATE_CONTROL;
+	else if(!strcmp("< can232mode >", buf))
+		state = STATE_CAN232;
 
 	if (current_state != state)
 		PRINT_INFO("state changed to %d\n", state);
@@ -278,7 +280,12 @@ int main(int argc, char **argv)
 		if(busses_string[i] == '\0')
 			break;
 		if(busses_string[i] == ',')
-			interface_count++;
+		{
+		//	interface_count++;
+			printf("ERROR: too many SocketCAN interfaces provided. \n\n");
+			print_usage();
+			return -1;
+		}
 	}
 	interface_count++;
 
@@ -376,6 +383,9 @@ int main(int argc, char **argv)
 	}
 #endif
 
+	strcpy(bus_name, interface_names[0]);
+        state = STATE_CAN232;
+
 	/* main loop with state machine */
 	while(1) {
 		switch(state) {
@@ -427,6 +437,9 @@ int main(int argc, char **argv)
 		case STATE_RAW:
 			state_raw();
 			break;
+		case STATE_CAN232:
+			state_can232();
+			break;
 		case STATE_ISOTP:
 			state_isotp();
 			break;
@@ -442,6 +455,100 @@ int main(int argc, char **argv)
 	}
 	return 0;
 }
+
+/* reads all available data from the socket into the command buffer.
+ * returns '-1' if no command could be received.
+ */
+int receive_command_can232(int socket, char *buffer) {
+	int i, stop;
+
+	/* if there are no more elements in the buffer read more data from the
+	 * socket.
+	 */
+	if(!more_elements) 
+	{
+		cmd_index += read(socket, cmd_buffer+cmd_index, MAXLEN-cmd_index);
+#ifdef DEBUG_RECEPTION
+		PRINT_VERBOSE("\tRead from socket\n");
+#endif
+	}
+
+#ifdef DEBUG_RECEPTION
+	PRINT_VERBOSE("\tcmd_index now %d\n", cmd_index);
+#endif
+
+	more_elements = 0;
+
+	/* find CR (end of the line) */
+	stop = -1;
+	for(i=1;i<cmd_index;i++) 
+	{
+		if(cmd_buffer[i] == '\r') 
+		{
+			stop = i;
+			break;
+		}
+	}
+
+	/* if no CR is in the string we have to wait for more data */
+	if(stop == -1) 
+	{
+#ifdef DEBUG_RECEPTION
+		PRINT_VERBOSE("\tNo full CAN232 element in the buffer\n");
+#endif
+		return -1;
+	}
+
+#ifdef DEBUG_RECEPTION
+	PRINT_VERBOSE("\tElement between %d and %d\n", start, stop);
+#endif
+
+	/* copy string to new destination and correct cmd_buffer */
+	for(i=0;i<stop;i++) 
+	{
+		buffer[i] = cmd_buffer[i];
+	}
+	buffer[i] = '\0';
+
+#ifdef DEBUG_RECEPTION
+	PRINT_VERBOSE("\tElement is '%s'\n", buffer);
+#endif
+
+	/* if only this message was in the buffer we're done */
+	if(stop == cmd_index-1) 
+	{
+		cmd_index = 0;
+	} 
+	else 
+	{
+		for(i=stop+1;i<cmd_index;i++) 
+		{
+			cmd_buffer[i-stop-1] = cmd_buffer[i];
+		}
+		cmd_index -= (stop+1);
+
+		/* check if there is at least one full element in the buffer */
+		stop = -1;
+		for(i=1;i<cmd_index;i++) 
+		{
+			if(cmd_buffer[i] == '\r') 
+			{
+				stop = i;
+				break;
+			}
+		}
+
+		if(stop != -1) 
+		{
+			more_elements = 1;
+#ifdef DEBUG_RECEPTION
+			PRINT_VERBOSE("\tMore than one full element in the buffer.\n");
+#endif
+		}
+	}
+	return 0;
+}
+
 
 /* reads all available data from the socket into the command buffer.
  * returns '-1' if no command could be received.
@@ -603,7 +710,7 @@ void print_usage(void) {
 	printf("Usage: socketcand [-v | --verbose] [-i interfaces | --interfaces interfaces]\n\t\t[-p port | --port port] [-l ip_addr | --listen interface]\n\t\t[-n | --no-beacon]\n\n");
 	printf("Options:\n");
 	printf("\t-v activates verbose output to STDOUT\n");
-	printf("\t-i comma separated list of SocketCAN interfaces the daemon shall\n\t\tprovide access to (e.g. -i can0,vcan1)\n");
+	printf("\t-i SocketCAN interface the daemon shall\n\t\tprovide access to (e.g. -i can0,vcan1)\n\t\tUnlike in original socketcand, only one SocketCAN interface can be provided.\n");
 	printf("\t-p port changes the default port (%d) the daemon is listening at\n", PORT);
 	printf("\t-l interface changes the default network interface the daemon will\n\t\tbind to\n");
 	printf("\t-d set this flag if you want log to syslog instead of STDOUT\n");

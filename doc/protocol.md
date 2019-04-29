@@ -19,6 +19,49 @@ The control mode controls if the bus is set to listen only, if sent packages are
 
     < can0 C listen_only loopback three_samples >
 
+##### Set CAN232 mode #####
+This command will switch into standard CAN232 protocol mode:
+
+	< can232mode >
+
+Detailed documentation of this protocol is available here: http://www.can232.com/docs/can232_v3.pdf
+
+  
+```
+CMD | IMPLEMENTED | SYNTAX               | DESCRIPTION
+------------------------------------------------------------------------------------------------------------
+'S' |    YES      |   Sn[CR]               Setup with standard CAN bit-rates where n is 0-8.
+    |             |                        S0 10Kbit          S4 125Kbit         S8 1Mbit
+    |             |                        S1 20Kbit          S5 250Kbit         S9 83.3Kbit
+    |             |                        S2 50Kbit          S6 500Kbit
+    |             |                        S3 100Kbit         S7 800Kbit
+    |             |                        Will always return OK, switching modes not possible.
+    |             |                        CAN mode is setup during interface set up. 
+    |             |                        
+'s' |    -        |   sxxyy[CR]            Setup with BTR0/BTR1 CAN bit-rates where xx and yy is a hex value.
+'O' |   YES       |   O[CR]                Open the CAN channel in normal mode (sending & receiving).
+'L' |   YES       |   L[CR]                Open the CAN channel in listen only mode (receiving).
+'C' |   YES       |   C[CR]                Close the CAN channel.
+'t' |   YES       |   tiiildd...[CR]       Transmit a standard (11bit) CAN frame.
+'T' |   YES       |   Tiiiiiiiildd...[CR]  Transmit an extended (29bit) CAN frame
+'r' |   YES       |   riiil[CR]            Transmit an standard RTR (11bit) CAN frame.
+'R' |   YES       |   Riiiiiiiil[CR]       Transmit an extended RTR (29bit) CAN frame.
+'P' |   YES       |   P[CR]                Poll incomming FIFO for CAN frames (single poll)
+'A' |   YES       |   A[CR]                Polls incomming FIFO for CAN frames (all pending frames)
+'F' |   YES+      |   F[CR]                Read Status Flags.
+'X' |   YES       |   Xn[CR]               Sets Auto Poll/Send ON/OFF for received frames.
+'W' |    -        |   Wn[CR]               Filter mode setting. By default CAN232 works in dual filter mode (0) and is backwards compatible with previous CAN232 versions.
+'M' |    -        |   Mxxxxxxxx[CR]        Sets Acceptance Code Register (ACn Register of SJA1000). // we use MCP2515, not supported
+'m' |    -        |   mxxxxxxxx[CR]        Sets Acceptance Mask Register (AMn Register of SJA1000). // we use MCP2515, not supported
+'U' |    -        |   Un[CR]               Setup UART with a new baud rate where n is 0-6.
+'V' |   YES       |   v[CR]                Get Version number of both CAN232 hardware and software
+'v' |   YES       |   V[CR]                Get Version number of both CAN232 hardware and software
+'N' |   YES       |   N[CR]                Get Serial number of the CAN232.
+'Z' |   YES+      |   Zn[CR]               Sets Time Stamp ON/OFF for received frames only. EXTENSION to LAWICEL: Z2 - millis() timestamp w/o standard 60000ms cycle
+'Q' |    -        |       Qn[CR]               Auto Startup feature (from power on). 
+
+```
+
 ## Mode BCM (default mode) ##
 After the client has successfully opened a bus the mode is switched to BCM mode (DEFAULT). In this mode a BCM socket to the bus will be opened and can be controlled over the connection. The following commands are understood:
 

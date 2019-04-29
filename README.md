@@ -5,7 +5,7 @@ Socketcand is a daemon that provides access to CAN interfaces on a machine via a
 
 Fork
 ----
-This is for of original socketcand. I needed a more simple version of socketcand where CAN interface is exposed over TCP port as is, without additional formating or additional command. This fork is doing it.
+This fork implements CAN232 protocol over TCP. Upon connection it automatically goes into CAN232 mode and most commands as discribed in CAN232 protocol will work. Detailed information about CAN232 support is discribed under ./doc/can232.md.
 
 Installation
 ------------
