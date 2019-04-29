@@ -460,7 +460,7 @@ int main(int argc, char **argv)
  * returns '-1' if no command could be received.
  */
 int receive_command_can232(int socket, char *buffer) {
-	int i, stop;
+	int i, start, stop;
 
 	/* if there are no more elements in the buffer read more data from the
 	 * socket.
@@ -499,6 +499,11 @@ int receive_command_can232(int socket, char *buffer) {
 		return -1;
 	}
 
+	// skipping LF character. This is neccessary to use protocol with telnet and CRLF enlines
+	start=0;
+	while(cmd_buffer[start]=='\n') start++;
+
+
 #ifdef DEBUG_RECEPTION
 	PRINT_VERBOSE("\tElement between %d and %d\n", start, stop);
 #endif
@@ -506,7 +511,7 @@ int receive_command_can232(int socket, char *buffer) {
 	/* copy string to new destination and correct cmd_buffer */
 	for(i=0;i<stop;i++) 
 	{
-		buffer[i] = cmd_buffer[i];
+		buffer[i] = cmd_buffer[i+start];
 	}
 	buffer[i] = '\0';
 

@@ -32,6 +32,8 @@ struct timeval tv;
 struct cmsghdr *cmsg;
 int channel_open = 0;
 int listen_only_mode = 0;
+int ACRn = 0xFFFFFFFFU;
+int AMRn = 0xFFFFFFFFU;
 
 #define LW232_LAWICEL_VERSION_STR     "V1013"
 #define LW232_LAWICEL_SERIAL_NUM      "NA123"
@@ -152,6 +154,9 @@ void state_can232()
 			} 
 			else 
 			{
+				// make filtering
+				if((frame.can_id|AMRn|CAN_ERR_MASK) != (ACRn|AMRn|CAN_ERR_MASK)) return;
+
 				if(frame.can_id & CAN_EFF_FLAG) // 29-bit address 
 				{
 					ret = sprintf(buf, "T%08X", frame.can_id & CAN_EFF_MASK);
@@ -218,7 +223,7 @@ void state_can232()
 					strncpy( word, buf+1, id_size);
 					word[id_size]='\0';
 
-					frame.can_id=(int)strtol(word,NULL,16);
+					frame.can_id=(int)strtoll(word,NULL,16);
 					if( id_size==8) frame.can_id |= CAN_EFF_FLAG;
 					if( buf[0]=='r' || buf[0]=='R') frame.can_id |= CAN_RTR_FLAG;
 
@@ -313,9 +318,33 @@ void state_can232()
 				case 'Z': // set timestamp ON/OFF
 					add_timestamp = buf[1];
 					break;
-				case 's': // commands that not supported
 				case 'm':
+					if(!channel_open)
+						sprintf(buf, "%c", LW232_RET_ASCII_ERROR);
+					else
+					{
+						strncpy(word, buf+1, 8);
+						word[8]='\0';
+						PRINT_VERBOSE("Old ACRn=%d (%08X)\n", ACRn, ACRn);
+						ACRn=strtoll(word, NULL, 16);
+						PRINT_VERBOSE("New ACRn=%d (%08X)\n", ACRn, ACRn);
+						sprintf(buf, "%c", LW232_RET_ASCII_OK);
+					}
+					break;
 				case 'M':
+					if(!channel_open)
+						sprintf(buf, "%c", LW232_RET_ASCII_ERROR);
+					else
+					{
+						strncpy(word, buf+1, 8);
+						word[8]='\0';
+						PRINT_VERBOSE("Old AMRn=%d (%08X)\n", AMRn, AMRn);
+						AMRn=strtoll(word, NULL, 16);
+						PRINT_VERBOSE("New AMRn=%d (%08X)\n", AMRn, AMRn);
+						sprintf(buf, "%c", LW232_RET_ASCII_OK);
+					}
+					break;
+				case 's': // commands that not supported
 				case 'W':
 				case 'U':
 				case 'Q':
@@ -324,7 +353,7 @@ void state_can232()
 					break;
 				default:
 					PRINT_ERROR("unknown command '%s'\n", buf);
-					strcpy(buf, "< error unknown command >\n");
+					sprintf(buf, "%c", LW232_RET_ASCII_ERROR);
 			}
 			send(client_socket, buf, strlen(buf), 0);
 		} 

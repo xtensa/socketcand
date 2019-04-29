@@ -19,7 +19,7 @@ The control mode controls if the bus is set to listen only, if sent packages are
 
     < can0 C listen_only loopback three_samples >
 
-##### Set CAN232 mode #####
+##### Set CAN232 mode (default mode) #####
 This command will switch into standard CAN232 protocol mode:
 
 	< can232mode >
@@ -48,21 +48,21 @@ CMD | IMPLEMENTED | SYNTAX               | DESCRIPTION
 'R' |   YES       |   Riiiiiiiil[CR]       Transmit an extended RTR (29bit) CAN frame.
 'P' |   YES       |   P[CR]                Poll incomming FIFO for CAN frames (single poll)
 'A' |   YES       |   A[CR]                Polls incomming FIFO for CAN frames (all pending frames)
-'F' |   YES+      |   F[CR]                Read Status Flags.
+'F' |   YES       |   F[CR]                Read Status Flags.
 'X' |   YES       |   Xn[CR]               Sets Auto Poll/Send ON/OFF for received frames.
 'W' |    -        |   Wn[CR]               Filter mode setting. By default CAN232 works in dual filter mode (0) and is backwards compatible with previous CAN232 versions.
-'M' |    -        |   Mxxxxxxxx[CR]        Sets Acceptance Code Register (ACn Register of SJA1000). // we use MCP2515, not supported
-'m' |    -        |   mxxxxxxxx[CR]        Sets Acceptance Mask Register (AMn Register of SJA1000). // we use MCP2515, not supported
+'M' |   YES       |   Mxxxxxxxx[CR]        Sets Acceptance Code Register (ACn Register of SJA1000). // will reset after restart
+'m' |   YES       |   mxxxxxxxx[CR]        Sets Acceptance Mask Register (AMn Register of SJA1000). // will reset after restart
 'U' |    -        |   Un[CR]               Setup UART with a new baud rate where n is 0-6.
 'V' |   YES       |   v[CR]                Get Version number of both CAN232 hardware and software
 'v' |   YES       |   V[CR]                Get Version number of both CAN232 hardware and software
 'N' |   YES       |   N[CR]                Get Serial number of the CAN232.
-'Z' |   YES+      |   Zn[CR]               Sets Time Stamp ON/OFF for received frames only. EXTENSION to LAWICEL: Z2 - millis() timestamp w/o standard 60000ms cycle
+'Z' |   YES       |   Zn[CR]               Sets Time Stamp ON/OFF for received frames only. EXTENSION to LAWICEL: Z2 - millis() timestamp w/o standard 60000ms cycle
 'Q' |    -        |       Qn[CR]               Auto Startup feature (from power on). 
 
 ```
 
-## Mode BCM (default mode) ##
+## Mode BCM ##
 After the client has successfully opened a bus the mode is switched to BCM mode (DEFAULT). In this mode a BCM socket to the bus will be opened and can be controlled over the connection. The following commands are understood:
 
 ### Commands for transmission ###
